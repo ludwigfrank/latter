@@ -1,26 +1,49 @@
+import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+enum AuthenticationState {
+    // if the authentication state was uninitialized, the user might be seeing a splash screen.
+    Uninitialized,
+    // if the authentication state was unauthenticated, the user might see a login form.
+    Unauthenticated,
+    // if the phone number was submitted, the user might see the code verification screen
+    PhoneNumberSubmitted,
+    // if the phone number was submitted, the user might see the code verification screen
+    SMSCodeSent,
+    // if the authentication state was loading, the user might be seeing a progress indicator.
+    Loading,
+    // if the authentication state was authenticated, the user might see a home screen.
+    Authenticated,
+}
 
-class UserRepository {
-    final FirebaseAuth _auth = FirebaseAuth.instance;
+class UserRepository with ChangeNotifier {
     final GoogleSignIn _googleSignIn = GoogleSignIn();
+    final FlutterSecureStorage storage = FlutterSecureStorage();
+    FirebaseAuth _auth = FirebaseAuth.instance;
+    AuthenticationState _state = AuthenticationState.Uninitialized;
     FirebaseUser instanceUser;
 
-    final FlutterSecureStorage storage = FlutterSecureStorage();
+    UserRepository.instance() : _auth = FirebaseAuth.instance {
+        _auth.onAuthStateChanged.listen(_onAuthStateChanged);
+    }
 
-    get verificationId => storage.read(key: 'verificationId');
-    get idToken => storage.read(key: 'idToken');
-    get currentUser => _auth.currentUser();
+    Future<String> get verificationId => storage.read(key: 'verificationId');
+    Future<String> get idToken => storage.read(key: 'idToken');
+    Future<FirebaseUser> get currentUser => _auth.currentUser();
+    AuthenticationState get state => _state;
+
+    void setState(AuthenticationState authenticationState) {
+        _state = authenticationState;
+        notifyListeners();
+    }
 
     Future<Null> verifyPhoneNumber({
         @required String phoneNumber,
-        @required Function codeSent,
         @required Function codeAutoRetrievalTimeout,
-        @required Function verificationCompleted,
         @required Function verificationFailed,
         Duration timeOut = const Duration(minutes: 1)
     }) async {
@@ -30,7 +53,12 @@ class UserRepository {
 
             ///   It will trigger when an SMS has been sent to the users phone,
             ///   and will include a [verificationId] and [forceResendingToken].
-            codeSent: codeSent,
+            codeSent: (String verificationId, [int forceResendingToken]) {
+                print('Authentication Code sent $verificationId');
+                persistVerificationId(verificationId);
+
+                setState(AuthenticationState.SMSCodeSent);
+            },
 
             ///   It will trigger when SMS auto-retrieval times out and provide a
             ///   [verificationId].
@@ -38,7 +66,9 @@ class UserRepository {
 
             ///   It will trigger when an SMS is auto-retrieved or the phone number has
             ///   been instantly verified. The callback will provide a [FirebaseUser].
-            verificationCompleted: verificationCompleted,
+            verificationCompleted: (AuthCredential credential) => {
+
+            },
 
             ///   Triggered when an error occurred during phone number verification.
             verificationFailed: verificationFailed
@@ -47,9 +77,14 @@ class UserRepository {
         return null;
     }
 
+    Future signOut() async {
+        _auth.signOut();
+        setState(AuthenticationState.Unauthenticated);
+        notifyListeners();
+        return Future.delayed(Duration.zero);
+    }
+
     Future<void> signInWithPhoneNumber({
-        // the verificationID returned from codeSent
-        @required verificationId,
         // the sms code send to the user number
         @required smsCode,
         Function confirmationCallback,
@@ -57,23 +92,24 @@ class UserRepository {
     }) async {
         final errorMessage = "We couldn't verify your code, please try again!";
 
+        final _verificationId = await verificationId;
+
         final AuthCredential credential = PhoneAuthProvider.getCredential(
-            verificationId: verificationId,
+            verificationId: _verificationId,
             smsCode: smsCode,
         );
 
         print(credential);
 
-        final FirebaseUser user = await _auth.signInWithCredential(credential);
-        instanceUser = user;
+        _auth.signInWithCredential(credential).then((user) async {
+            String token = await user.getIdToken();
+            String uid = user.uid;
 
-        String token = await user.getIdToken();
-        String uid = user.uid;
+            persistToken(token);
+            persistUID(uid);
 
-        persistToken(token);
-        persistUID(uid);
-
-        print(token);
+            print(token);
+        }).catchError((onError) => print(onError));
     }
 
     Future<String> authenticate({
@@ -84,15 +120,15 @@ class UserRepository {
         return 'token';
     }
 
-    Future<void> deleteToken() async {
-        /// delete from keystore/keychain
-        await Future.delayed(Duration(seconds: 1));
-        return;
-    }
-
     Future<void> persistVerificationId(String verificationId) async {
         /// write to keystore/keychain
         await storage.write(key: 'verificationId', value: verificationId);
+        return;
+    }
+
+    Future<void> deleteToken() async {
+        /// delete from keystore/keychain
+        await Future.delayed(Duration(seconds: 1));
         return;
     }
 
@@ -110,11 +146,20 @@ class UserRepository {
 
     Future<bool> hasToken() async {
         /// read from keystore/keychain
-        ///
         String idToken = await this.idToken;
         print(idToken);
         if (idToken != null) return true;
 
         return false;
+    }
+
+    Future<void> _onAuthStateChanged(FirebaseUser firebaseUser) async {
+        if (firebaseUser == null) {
+            setState(AuthenticationState.Unauthenticated);
+        } else {
+            instanceUser = firebaseUser;
+            setState(AuthenticationState.Authenticated);
+        }
+        notifyListeners();
     }
 }
