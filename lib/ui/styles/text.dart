@@ -15,10 +15,24 @@ TextStyle header2TextStyle = TextStyle(
 );
 
 TextStyle header4TextStyle = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.05,
+    fontSize: 19,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.15,
     color: textColors['black'],
+);
+
+TextStyle subhead = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.15,
+    color: textColors['black'],
+);
+
+TextStyle body1TextStyle = TextStyle(
+  fontSize: 15,
+  fontWeight: FontWeight.w500,
+  letterSpacing: 0.05,
+  color: textColors['primary']
 );
 
 TextStyle body2TextStyle = TextStyle(

@@ -1,22 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
+import 'package:latter/core/models/message.dart';
 import 'package:latter/core/models/profile.dart';
-import 'package:meta/meta.dart';
 
+part 'conversation.g.dart';
 
-class Chat {
-    final String id;
-    final List<Profile> participants;
-    final List<String> messages;
+abstract class Conversation implements Built<Conversation, ConversationBuilder> {
+    static Serializer<Conversation> get serializer => _$conversationSerializer;
 
-    Chat({ this.id, this.messages, this.participants});
-    
-    factory Chat.fromFirestore(DocumentSnapshot doc) {
-        Map data = doc.data;
+    String get id;
+    String get lastMessage;
+    String get title;
+    BuiltList<String> get participantIds;
 
-        return Chat(
-            id: doc.documentID,
-            participants: data['participants'],
-            messages: data['messages']
-        )
-    }
+    Conversation._();
+
+    factory Conversation([updates(ConversationBuilder b)]) = _$Conversation;
 }
