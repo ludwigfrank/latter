@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latter/core/models/conversation.dart';
 import 'package:latter/core/models/message.dart';
 import 'package:latter/core/models/update_interval.dart';
@@ -9,6 +10,7 @@ import 'package:latter/ui/styles/text.dart';
 import 'package:latter/ui/widgets/custom_app_bar/custom_app_bar.dart';
 import 'package:latter/ui/widgets/la_message/la_message.dart';
 import 'package:provider/provider.dart';
+import 'package:sensors/sensors.dart';
 
 
 class ChatView extends StatefulWidget {
@@ -24,14 +26,23 @@ class ChatView extends StatefulWidget {
 class _ChatViewState extends State<ChatView> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   TextEditingController textEditingController;
+  AccelerometerEvent acceleration;
 
   @override
   void initState () {
 
     textEditingController = TextEditingController();
 
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      if(event.x > 79 && textEditingController.text.length > 10) {
+        handleMessageSend(isImportant: true);
+        SystemChannels.platform.invokeMethod<void>('HapticFeedback.vibrate');
+      }
+    });
+
     super.initState();
   }
+
 
   Widget _buildInput () {
     return Padding(
@@ -58,8 +69,7 @@ class _ChatViewState extends State<ChatView> {
                 )
             )
           ),
-          IconButton(icon: Icon(Icons.send, color: Colors.deepPurpleAccent), padding: EdgeInsets.only(left: 16.0),onPressed: () { handleMessageSend(isImportant: false); },),
-          IconButton(icon: Icon(Icons.priority_high, color: Colors.blueGrey[900],), onPressed: () { handleMessageSend(isImportant: true); },)
+          IconButton(icon: Icon(Icons.send, color: Colors.deepPurpleAccent),onPressed: () { handleMessageSend(isImportant: false); },),
         ],
       )
     );

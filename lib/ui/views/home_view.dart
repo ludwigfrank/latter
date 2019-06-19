@@ -24,16 +24,6 @@ class HomeView extends StatefulWidget {
 }
 
 
-Widget _buildChats(BuildContext context) {
-    return Center(
-        child: OutlineButton(
-            child: Text('Contacts',),
-            onPressed: () { Navigator.pushNamed(context, '/contacts');},
-        ),
-    );
-}
-
-
 class _HomeViewState extends State<HomeView> {
     int _selectedIndex = 1;
 

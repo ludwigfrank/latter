@@ -144,6 +144,8 @@ PODS:
   - PhoneNumberKit/UIKit (2.6.0):
     - PhoneNumberKit/PhoneNumberKitCore
   - Protobuf (3.7.0)
+  - sensors (0.0.1):
+    - Flutter
   - shared_preferences (0.0.1):
     - Flutter
 
@@ -157,6 +159,7 @@ DEPENDENCIES:
   - google_sign_in (from `.symlinks/plugins/google_sign_in/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
   - phone_number (from `.symlinks/plugins/phone_number/ios`)
+  - sensors (from `.symlinks/plugins/sensors/ios`)
   - shared_preferences (from `.symlinks/plugins/shared_preferences/ios`)
 
 SPEC REPOS:
@@ -200,6 +203,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler/ios"
   phone_number:
     :path: ".symlinks/plugins/phone_number/ios"
+  sensors:
+    :path: ".symlinks/plugins/sensors/ios"
   shared_preferences:
     :path: ".symlinks/plugins/shared_preferences/ios"
 
@@ -232,6 +237,7 @@ SPEC CHECKSUMS:
   phone_number: 1435ddff3e6e3aa29bb154483fc823b8ace02178
   PhoneNumberKit: 167ee1f0bbb6efce7c62559e620eae745595532f
   Protobuf: 7a877b7f3e5964e3fce995e2eb323dbc6831bb5a
+  sensors: b5c565b45237fd2df1c347c14bf5ceeffdb7a2be
   shared_preferences: 1feebfa37bb57264736e16865e7ffae7fc99b523
 
 PODFILE CHECKSUM: ebd43b443038e611b86ede96e613bd6033c49497
